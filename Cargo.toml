@@ -1,0 +1,8 @@
+[package]
+name = "coal"
+version = "0.1.0"
+authors = ["Deepankar Agrawal <deepankar11093@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+nix = "0.13.0"
