@@ -1,11 +1,11 @@
 extern crate nix;
 
+use nix::unistd::sleep;
 use std::env::args;
 
 mod container;
 
-
-const COMMANDS:&[&str]  = &["run"];
+const COMMAND: &str = "run";
 
 fn main() {
     // for arg in args() {
@@ -13,25 +13,17 @@ fn main() {
     // }
 
     let args_list: Vec<String> = args().collect();
-    if args_list.len() > 1 && COMMANDS.contains(&args_list[1].as_ref()) {
-        run_command(&args_list[1].as_ref());
+    if args_list.len() > 1 && args_list[1] == COMMAND {
+        container::create(&run);
     } else {
-        invalid_command();
+        println!("please type in correct command");
     }
-}
-
-fn run_command(command: &str) {
-    match command {
-        "run" => run(),
-        _ => invalid_command(),
-    };
-}
-
-fn invalid_command() {
-    println!("please type in correct command");
 }
 
 fn run() {
     println!("run called");
-    container::test();
+    for _a in 0..3 {
+        println!("child running");
+        sleep(1);
+    }
 }
