@@ -11,3 +11,6 @@ Cargo.lock
 
 # IDEs
 .vscode
+
+# Project related
+alpine
