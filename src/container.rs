@@ -1,4 +1,5 @@
 use nix::sys::wait::*;
+use nix::mount::*;
 use nix::unistd::*;
 
 const ROOT_IMAGE_PATH: &str = "/media/deepankar/7039DF1C0BF3397F/Projects/coal/alpine/";
@@ -18,8 +19,18 @@ pub fn create(command: &Fn(Vec<String>), args: Vec<String>) {
             }
         }
         ForkResult::Child => {
+            // change to base image directory
             setup_root(ROOT_IMAGE_PATH);
+
+            // mount proc
+            mount::<str, str, str, str>(
+                Some("proc"), "/proc", Some("proc"), MsFlags::MS_REMOUNT, None
+            ).expect("mount error");
+
+            // finally run the command in container
             command(args);
+
+            umount("/proc").expect("unmount failed");
         }
     }
 }
