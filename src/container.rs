@@ -5,7 +5,7 @@ use nix::sched;
 use std::ffi::CString;
 
 const ROOT_IMAGE_PATH: &str = "/media/deepankar/7039DF1C0BF3397F/Projects/coal/alpine/";
-const STACK_SIZE: usize = 512 * 512;
+const STACK_SIZE: usize = 128 * 128;
 
 
 fn run_image(args: &Vec<String>) -> isize {
@@ -15,15 +15,17 @@ fn run_image(args: &Vec<String>) -> isize {
 
     // mount proc
     mount::<str, str, str, str>(
-        Some("proc"),
-        "/proc",
-        Some("proc"),
-        MsFlags::MS_REMOUNT,
-        None,
+        Some("proc"), "/proc", Some("proc"), MsFlags::MS_RDONLY, None,
     ).expect("mount error");
 
     // finally run the command in container
-    run(args.to_vec());
+    let ref mut stack = [0; 64*64];
+    sched::clone(
+        Box::new(|| run(args.to_vec())), stack,
+        sched::CloneFlags::empty(),
+        Some(nix::sys::signal::Signal::SIGCHLD as i32)
+    ).expect("Failed to spawn the command");
+    wait().expect("wait failed for command");
 
     umount("/proc").expect("unmount failed");
     0
@@ -36,13 +38,13 @@ pub fn create(args: Vec<String>) {
     let child_pid = sched::clone(
         Box::new(|| run_image(&args)),
         stack,
-        sched::CloneFlags::CLONE_NEWUTS,
+        sched::CloneFlags::CLONE_NEWPID | sched::CloneFlags::CLONE_NEWUTS,
         Some(nix::sys::signal::Signal::SIGCHLD as i32)
-    ).expect("Failed to spawn the child");
+    ).expect("Failed to spawn the container");
 
     println!("child pid is {}", child_pid);
 
-    match wait().expect("wait failed") {
+    match wait().expect("wait failed for container") {
         WaitStatus::Exited(_pid, _a) =>
             println!("child exited {}", _pid),
         _ => return,
@@ -60,11 +62,12 @@ fn setup_root(root_path: &str) {
     chdir("/").expect("change directory failed");
 }
 
-fn run(args: Vec<String>) {
+fn run(args: Vec<String>) -> isize {
     let mut cargs: Vec<CString> = vec![];
     for arg in args {
         cargs.push(cstring(&arg));
     }
 
     execvp(&cargs[0], &cargs).expect("Invalid command to run");
+    0
 }
