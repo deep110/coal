@@ -3,13 +3,15 @@ use nix::sys::wait::*;
 use nix::unistd::*;
 use nix::sched;
 use std::ffi::CString;
+use std::fs;
 
 const ROOT_IMAGE_PATH: &str = "/media/deepankar/7039DF1C0BF3397F/Projects/coal/alpine/";
 const STACK_SIZE: usize = 128 * 128;
+const CGROUP_FOLDER: &str = "/sys/fs/cgroup/pids/coal/";
 
 
 fn run_image(args: &Vec<String>) -> isize {
-    print!("run image called");
+    limit_processes();
     // change to base image directory
     setup_root(ROOT_IMAGE_PATH);
 
@@ -53,13 +55,18 @@ pub fn create(args: Vec<String>) {
 
 // util functions
 
-fn cstring(value: &str) -> CString {
-    CString::new(value).expect("some err")
-}
-
 fn setup_root(root_path: &str) {
     chroot(root_path).expect("error called");
     chdir("/").expect("change directory failed");
+}
+
+fn limit_processes() {    
+    fs::create_dir(CGROUP_FOLDER).ok();
+    let pid = getpid().as_raw().to_string();
+
+    fs::write(format!("{}{}", CGROUP_FOLDER, "cgroup.procs"), pid).expect("Unable to write file");
+    fs::write(format!("{}{}", CGROUP_FOLDER, "pids.max"), "5").expect("Unable to write file");
+    fs::write(format!("{}{}", CGROUP_FOLDER, "notify_on_release"), "1").expect("Unable to write file");
 }
 
 fn run(args: Vec<String>) -> isize {
@@ -70,4 +77,8 @@ fn run(args: Vec<String>) -> isize {
 
     execvp(&cargs[0], &cargs).expect("Invalid command to run");
     0
+}
+
+fn cstring(value: &str) -> CString {
+    CString::new(value).expect("some err")
 }
