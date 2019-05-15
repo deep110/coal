@@ -5,7 +5,7 @@ use nix::sched;
 use std::ffi::CString;
 use std::fs;
 
-const ROOT_IMAGE_PATH: &str = "/media/deepankar/7039DF1C0BF3397F/Projects/coal/alpine/";
+const ROOT_IMAGE_PATH: &str = "alpine/";
 const STACK_SIZE: usize = 128 * 128;
 const CGROUP_FOLDER: &str = "/sys/fs/cgroup/pids/coal/";
 
