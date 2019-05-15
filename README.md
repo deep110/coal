@@ -1,6 +1,8 @@
 # coal
 Linux container like docker for learning purposes
 
+![](demo/output.gif)
+
 ### Setup
 
 1. If you don't have rust installed, follow the instructions [here](https://www.rust-lang.org/tools/install).
@@ -23,6 +25,12 @@ If you are running from debug build:
 sudo target/debug/coal run /bin/sh
 ```
 In place of bash you can run any command that will be available in alpine by default.
+
+### Implemented [As shown in demo]
+* A new process is started in run command
+* Container has its own PID tree, host and network
+* Limit on number of process using control groups
+
 
 ### Reading Material / libc functions used
 * [Fork](http://man7.org/linux/man-pages/man2/fork.2.html)
